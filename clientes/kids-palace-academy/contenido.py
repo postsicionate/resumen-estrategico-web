@@ -12,7 +12,8 @@ CLIENTE = dict(
     quien='la academia',                            # «Lo que necesitamos de …»
     pregunta='¿Por qué debo confiar en esta institución para el cuidado y la educación inicial de mis hijos?',
     palabra_pintada='confiar',
-    archivo='kpa-resumen-estrategico', version='1.1',
+    etiqueta_pregunta='La pregunta de la familia que responde',  # rótulo sobre la pregunta de cada hoja de página
+    archivo='kpa-resumen-estrategico', version='1.2',
     asunto='Resumen estratégico para la primera revisión',
 )
 
@@ -94,7 +95,7 @@ HOJAS = [
                    arbol=[('Inicio', True), ('Nuestra historia', True, '', [('Conoce a los fundadores', True), ('Conoce al equipo', True)]),
                           ('Aulas', True), ('Aprendizaje', True), ('Familias', True), ('VPK', False),
                           ('Notas del Palacio', False, 'el blog'), ('Visítanos', False, 'con el formulario de visita'),
-                          ('Páginas legales', False, 'privacidad, cookies y no discriminación')]),
+                          ('Páginas legales', False, 'privacidad, términos de uso y no discriminación')]),
          movil='img/hero-mobile.jpg', acento_movil='sol',
          pie_movil='<b>En el teléfono,</b> la portada mantiene el titular, los botones grandes y la barra fija con «Llamar» y «Pide tu visita».'),
 
@@ -357,8 +358,8 @@ HOJAS = [
                   texto='Artículos útiles para las familias, en los dos idiomas. Además de ayudar a las familias, son la mejor forma de aparecer en Google con el tiempo.',
                   necesario=['Aprobar los 12 temas propuestos.'], recomendado=['Ideas de las maestras: las preguntas que más oyen de los padres.']),
              dict(titulo='Páginas legales', etiqueta='Antes del lanzamiento',
-                  texto='Política de privacidad, política de cookies y declaración de no discriminación del USDA, enlazadas desde el pie.',
-                  necesario=['La versión de la declaración que exige el Programa de Alimentos (ver Familias).'], recomendado=[]),
+                  texto='Política de privacidad (incluye las cookies), términos de uso y declaración de no discriminación del USDA, enlazadas desde el pie. Los borradores de privacidad y términos ya están en la web, sin publicar.',
+                  necesario=['Aprobar los textos de privacidad y términos de uso. Recomendamos que los revise su abogado.', 'La versión de la declaración que exige el Programa de Alimentos (ver Familias).'], recomendado=[]),
              dict(titulo='Galería de eventos', etiqueta='Por definir',
                   texto='Un espacio donde la academia sube fotos de sus celebraciones. Lo definimos en la reunión: dónde se muestra, quién la actualiza y cómo se gestionan las autorizaciones.',
                   necesario=[], recomendado=['Decidir si habrá galería y quién la actualizará.', 'Un formulario de autorización de imagen que distinga entre documentar actividades y publicarlas.']),

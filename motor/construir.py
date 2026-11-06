@@ -168,7 +168,7 @@ class Doc:
         return f'''<section class="sheet a-{p['acento']}">{self.rh()}<div class="body"><div class="pg" style="--sw:{p.get('ancho_tira', 182)}px">
 <div class="pg-main">
   <div class="pg-top"><div class="pnum">{p['n']}</div><div><p class="kick">Página de la web</p><h1 class="h1">{E(p['nombre'])}</h1><p class="url">{E(p['url'])}</p></div></div>
-  <div class="pq"><span class="lbl">{E(p.get('etiqueta_pregunta', 'La pregunta que responde'))}</span><p class="q">«{E(p['pregunta'])}»</p></div>
+  <div class="pq"><span class="lbl">{E(p.get('etiqueta_pregunta', self.cli.get('etiqueta_pregunta', 'La pregunta que responde')))}</span><p class="q">«{E(p['pregunta'])}»</p></div>
   <div class="logic"><span class="lbl">La lógica</span><ol>{logic}</ol></div>
   {self.checklist(p.get('necesario', []), p.get('recomendado', []), extra)}
 </div>
