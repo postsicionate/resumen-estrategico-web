@@ -3,6 +3,7 @@
 
 Uso:
     python3 motor/construir.py clientes/<cliente>            # HTML + PDF + comprobación
+    (la edición «entrega» usa además la hoja `pasos`: capturas con números y los pasos que señalan)
     python3 motor/construir.py clientes/<cliente> --sin-pdf  # solo HTML
 
 Lee clientes/<cliente>/contenido.py y produce:
@@ -28,6 +29,7 @@ MARCA_BASE = dict(
     titulos=dict(familia='Montserrat', archivos={500: 'fuentes/mont-500.ttf', 600: 'fuentes/mont-600.ttf',
                                                  700: 'fuentes/mont-700.ttf', 800: 'fuentes/mont-800.ttf'}),
     cifras=None,  # ruta a una fuente de dígitos sin solapes (ver herramientas/fuentes.py); None = la de títulos
+    css='',       # CSS propio del cliente, después de estilos.css (por ejemplo, titulares en la fuente de su web)
 )
 
 
@@ -84,7 +86,15 @@ class Doc:
     def items(lst):
         return ''.join(f'<li><span class="bx"></span><span>{E(t)}</span></li>' for t in lst)
 
-    def checklist(self, need, rec, extra=''):
+    def checklist(self, need, rec, extra='', lista=None):
+        """La lista para marcar. `lista` (edición entrega) cambia los rótulos:
+        dict(titulo, nota, grupos=[(rótulo, subtítulo, 'need'|'rec', [puntos])])."""
+        if lista:
+            out = [f'<section class="chk"><div class="chk-h"><h3>{E(lista["titulo"])}</h3><small>{E(lista.get("nota", "Marque al completar"))}</small></div>']
+            for rot, sub, cls, pts in lista['grupos']:
+                out.append(f'<div class="grp {cls}"><div class="grp-h"><b>{E(rot)}</b><i>{E(sub)}</i></div><ul>{self.items(pts)}</ul></div>')
+            out.append('</section>')
+            return ''.join(out)
         out = ['<section class="chk"><div class="chk-h"><h3>Lo que necesitamos de ', E(self.cli['quien']),
                '</h3><small>Marque al completar</small></div>']
         if need:
@@ -114,18 +124,35 @@ class Doc:
 <p class="for">Preparado para {E(c['para'])} <span>· {E(c['cargo'])}</span></p></div>{imgs}</section>'''
 
     def intro(self, h, n):
-        rows = ''.join(
-            f'<tr><td><small>{i + 1:02d}</small>{E(a)}</td><td>{E(b)}</td><td class="has"><span class="sq on"></span>{E(c)}</td>'
-            f'<td class="miss"><span class="sq off"></span>{E(d)}</td></tr>' for i, (a, b, c, d) in enumerate(h['filas']))
         cols = h.get('columnas', ['Lo que necesita ver', 'Cómo lo mostramos', 'Ya lo tenemos', 'Nos falta'])
-        return f'''<section class="sheet intro a-{h.get('acento', 'rojo')}">{self.rh()}<div class="body">
-<p class="kick">Introducción</p><h1 class="h1">{E(h['titulo'])}</h1><p class="lead">{E(h['entrada'])}</p>
-<table class="tt-table"><colgroup><col style="width:21%"><col style="width:31%"><col style="width:23%"><col style="width:25%"></colgroup>
-<thead><tr><th>{E(cols[0])}</th><th>{E(cols[1])}</th><th><span class="sq on"></span>{E(cols[2])}</th><th><span class="sq off"></span>{E(cols[3])}</th></tr></thead>
-<tbody>{rows}</tbody></table>
-<div class="howto"><h3>Cómo leer las hojas siguientes</h3>
+        anchos = h.get('anchos', [21, 31, 23, 25] if len(cols) == 4 else [round(100 / len(cols))] * len(cols))
+        cg = ''.join(f'<col style="width:{w}%">' for w in anchos)
+        if h.get('marcas_columnas', True) and len(cols) == 4:
+            # Edición de revisión: «lo tenemos» en verde y «falta» con su casilla.
+            rows = ''.join(
+                f'<tr><td><small>{i + 1:02d}</small>{E(a)}</td><td>{E(b)}</td><td class="has"><span class="sq on"></span>{E(c)}</td>'
+                f'<td class="miss"><span class="sq off"></span>{E(d)}</td></tr>' for i, (a, b, c, d) in enumerate(h['filas']))
+            head = f'<th>{E(cols[0])}</th><th>{E(cols[1])}</th><th><span class="sq on"></span>{E(cols[2])}</th><th><span class="sq off"></span>{E(cols[3])}</th>'
+        else:
+            # Edición de entrega: texto llano en todas las columnas.
+            rows = ''.join('<tr>' + ''.join(f'<td>{"<small>%02d</small>" % (i + 1) if j == 0 else ""}{E(c)}</td>' for j, c in enumerate(f)) + '</tr>'
+                           for i, f in enumerate(h['filas']))
+            head = ''.join(f'<th>{E(c)}</th>' for c in cols)
+        cj = h.get('caja')
+        if cj:
+            notas = ''.join(f'<p class="{"n" if k == 0 else "r"}"><b>{E(a)}</b>{E(b)}</p>' for k, (a, b) in enumerate(cj.get('notas', [])))
+            caja = (f'<div class="howto"><h3>{E(cj["titulo"])}</h3><p>{E(cj["texto"])}</p>'
+                    f'<div style="display:grid;gap:10px">{notas}</div></div>')
+        else:
+            caja = f'''<div class="howto"><h3>Cómo leer las hojas siguientes</h3>
 <p>Cada hoja explica una página de la web: la pregunta que responde, la lógica de su estructura y una lista para marcar con lo que necesitamos de {E(self.cli['quien'])}.</p>
-<div style="display:grid;gap:10px"><p class="n"><b>Necesario</b>Sin esto la página no se puede terminar: datos, confirmaciones, permisos y aprobaciones.</p><p class="r"><b>Recomendado</b>La haría más fuerte. Cada recomendación explica por qué.</p></div></div>
+<div style="display:grid;gap:10px"><p class="n"><b>Necesario</b>Sin esto la página no se puede terminar: datos, confirmaciones, permisos y aprobaciones.</p><p class="r"><b>Recomendado</b>La haría más fuerte. Cada recomendación explica por qué.</p></div></div>'''
+        return f'''<section class="sheet intro a-{h.get('acento', 'rojo')}">{self.rh()}<div class="body">
+<p class="kick">{E(h.get('antetitulo', 'Introducción'))}</p><h1 class="h1">{E(h['titulo'])}</h1><p class="lead">{E(h['entrada'])}</p>
+<table class="tt-table"><colgroup>{cg}</colgroup>
+<thead><tr>{head}</tr></thead>
+<tbody>{rows}</tbody></table>
+{caja}
 </div>{self.ft(n)}</section>'''
 
     def principios(self, h, n):
@@ -144,20 +171,31 @@ class Doc:
             movil = ''
             if h.get('movil'):
                 movil = f'<div class="a-{h.get("acento_movil", "sol")}"><div class="phone-s"><img src="{h["movil"]}" alt=""></div><p class="cap">{h.get("pie_movil", "")}</p></div>'
-            mapa = (f'<div class="mapz"><div class="map"><span class="lbl">Mapa de la web</span><h3>{E(m["titulo"])}</h3>'
+            leyenda = ('<div class="legend"><span><span class="ss"></span>Construida</span><span><span class="ss off"></span>Próxima</span></div>'
+                       if m.get('leyenda', True) else '')
+            mapa = (f'<div class="mapz"><div class="map"><span class="lbl">{E(m.get("etiqueta", "Mapa de la web"))}</span><h3>{E(m["titulo"])}</h3>'
                     f'<p class="note">{E(m["nota"])}</p><ul class="tree">{"".join(li(x) for x in m["arbol"])}</ul>'
-                    '<div class="legend"><span><span class="ss"></span>Construida</span><span><span class="ss off"></span>Próxima</span></div></div>'
+                    f'{leyenda}</div>'
                     f'{movil}</div>')
         return f'''<section class="sheet a-{h.get('acento', 'azul')}">{self.rh()}<div class="body">
-<p class="kick">Principios</p><h1 class="h1">{E(h['titulo'])}</h1><div class="prin">{cells}</div>{mapa}
+<p class="kick">{E(h.get('antetitulo', 'Principios'))}</p><h1 class="h1">{E(h['titulo'])}</h1><div class="prin">{cells}</div>{mapa}
 </div>{self.ft(n)}</section>'''
 
     def pagina(self, p, n):
         alto = p['alto_tira']  # alto en píxeles de la imagen de la tira
         esc = p.get('escala', 0.3)
-        marks = ''.join(f'<span class="mk" style="top:{y * esc / alto * 100:.2f}%">{i + 1}</span>' for i, y in enumerate(p['marcas']))
+        # Una marca None es un punto que no está en la captura (sale en otra página).
+        # Una marca (y, x) se coloca además a x % del ancho de la tira (por defecto, en su borde izquierdo).
+        def marca(i, m):
+            if isinstance(m, (tuple, list)):
+                y, x = m
+                return f'<span class="mk" style="top:{y * esc / alto * 100:.2f}%;left:calc({x}% - 11px)">{i + 1}</span>'
+            return f'<span class="mk" style="top:{m * esc / alto * 100:.2f}%">{i + 1}</span>'
+        marks = ''.join(marca(i, m) for i, m in enumerate(p['marcas']) if m is not None)
+        def sin_marca(i):
+            return i >= len(p['marcas']) or p['marcas'][i] is None
         logic = ''.join(
-            f'<li><span class="mk{" nm" if i >= len(p["marcas"]) else ""}">{i + 1}</span><div><b>{E(t)}</b><p>{E(d)}</p></div></li>'
+            f'<li><span class="mk{" nm" if sin_marca(i) else ""}">{i + 1}</span><div><b>{E(t)}</b><p>{E(d)}</p></div></li>'
             for i, (t, d) in enumerate(p['logica']))
         extra = ''
         if p.get('fotos'):
@@ -167,10 +205,10 @@ class Doc:
         cap = p.get('pie_tira', '<b>La página completa, vista en ordenador.</b> Los números señalan cada punto de «La lógica».')
         return f'''<section class="sheet a-{p['acento']}">{self.rh()}<div class="body"><div class="pg" style="--sw:{p.get('ancho_tira', 182)}px">
 <div class="pg-main">
-  <div class="pg-top"><div class="pnum">{p['n']}</div><div><p class="kick">Página de la web</p><h1 class="h1">{E(p['nombre'])}</h1><p class="url">{E(p['url'])}</p></div></div>
+  <div class="pg-top"><div class="pnum">{p['n']}</div><div><p class="kick">{E(p.get('antetitulo', 'Página de la web'))}</p><h1 class="h1">{E(p['nombre'])}</h1><p class="url">{E(p['url'])}</p></div></div>
   <div class="pq"><span class="lbl">{E(p.get('etiqueta_pregunta', self.cli.get('etiqueta_pregunta', 'La pregunta que responde')))}</span><p class="q">«{E(p['pregunta'])}»</p></div>
-  <div class="logic"><span class="lbl">La lógica</span><ol>{logic}</ol></div>
-  {self.checklist(p.get('necesario', []), p.get('recomendado', []), extra)}
+  <div class="logic"><span class="lbl">{E(p.get('titulo_logica', 'La lógica'))}</span><ol>{logic}</ol></div>
+  {f'<div class="acc"><b>{E(p["nota"][0])}</b><p>{E(p["nota"][1])}</p></div>' if p.get('nota') else ''}{self.checklist(p.get('necesario', []), p.get('recomendado', []), extra, p.get('lista'))}
 </div>
 <aside class="pg-side"><div class="strip-w"><div class="strip"><img src="{p['tira']}" alt=""></div>{marks}</div><p class="cap">{cap}</p></aside>
 </div></div>{self.ft(n)}</section>'''
@@ -201,6 +239,38 @@ class Doc:
 <div class="pn-grid"><div><span class="lbl">{E(h.get('titulo_puede', 'Lo que se puede hacer'))}</span><ul class="does">{does}</ul></div>{shots}</div>
 {tabla}{nota}</div>{self.ft(n)}</section>'''
 
+    def pasos(self, h, n):
+        """Edición de entrega: una o varias capturas con números encima y los pasos que señalan.
+
+        capturas=[dict(src, ancho=% del ancho útil, marcas=[(x %, y %, número)], pie='…', marco='panel'|'web')]
+        pasos=[(título, texto)]  -> numerados 1…n, como las marcas
+        lado=True               -> capturas a la derecha (columna de `ancho_lado` px) y pasos a la izquierda
+        capturas_lado=[…]       -> con lado=True: `capturas` en una fila arriba y estas junto a los pasos
+        """
+        def figuras(lista):
+            out = ''
+            for c in lista:
+                mk = ''.join(f'<span class="mk" style="left:{x}%;top:{y}%">{k}</span>' for x, y, k in c.get('marcas', []))
+                pie = f'<figcaption>{c["pie"]}</figcaption>' if c.get('pie') else ''
+                out += (f'<figure class="g-fig {c.get("marco", "panel")}" style="width:{c.get("ancho", 100)}%">'
+                        f'<div class="g-shot"><img src="{c["src"]}" alt="">{mk}</div>{pie}</figure>')
+            return out
+        figs = figuras(h.get('capturas', []))
+        cols = h.get('columnas_pasos', 2 if not h.get('lado') else 1)
+        steps = ''.join(f'<li><span class="mk">{i + 1}</span><div><b>{E(t)}</b><p>{E(d)}</p></div></li>' for i, (t, d) in enumerate(h['pasos']))
+        nota = f'<div class="acc"><b>{E(h["nota"][0])}</b><p>{E(h["nota"][1])}</p></div>' if h.get('nota') else ''
+        lista = self.checklist([], [], '', h['lista']) if h.get('lista') else ''
+        if h.get('lado'):
+            # Con `capturas_lado`, `capturas` va en una fila arriba y `capturas_lado` junto a los pasos.
+            arriba, junto = ('', figs) if 'capturas_lado' not in h else (f'<div class="g-figs">{figs}</div>' if figs else '', figuras(h['capturas_lado']))
+            cuerpo = (f'{arriba}<div class="g-lado" style="--gl:{h.get("ancho_lado", 330)}px"><ol class="g-steps c1">{steps}</ol>'
+                      f'<div class="g-figs col">{junto}</div></div>')
+        else:
+            cuerpo = f'<div class="g-figs">{figs}</div><ol class="g-steps c{cols}">{steps}</ol>'
+        return f'''<section class="sheet guide a-{h.get('acento', 'sol')}">{self.rh()}<div class="body">
+<p class="kick">{E(h.get('antetitulo', 'Paso a paso'))}</p><h1 class="h1">{h['titulo'] if h.get('titulo_html') else E(h['titulo'])}</h1><p class="lead">{E(h['entrada'])}</p>
+{cuerpo}{nota}{lista}</div>{self.ft(n)}</section>'''
+
     def proximas(self, h, n):
         blocks = ''
         for b in h['bloques']:
@@ -225,18 +295,20 @@ class Doc:
                         for i, (c, t, d) in enumerate(h['pasos']))
         boxes = ''.join(f'<div class="bxx a-{c}"><h3>{E(t)}</h3><p>{E(d)}</p></div>' for c, t, d in h['cajas'])
         rl = ''.join(f'<li class="{"now" if i == h.get("paso_actual", 0) else ""}"><span>{i + 1:02d}</span>{E(x)}</li>' for i, x in enumerate(h['ruta']))
-        notas = '<div class="notes"><span class="lbl" style="color:var(--gris)">Notas de la revisión</span>' + '<div class="ln"></div>' * h.get('lineas_notas', 6) + '</div>'
+        cols = '' if len(h['ruta']) == 5 else f' style="grid-template-columns:repeat({len(h["ruta"])},minmax(0,1fr))"'
+        notas = (f'<div class="notes"><span class="lbl" style="color:var(--gris)">{E(h.get("titulo_notas", "Notas de la revisión"))}</span>'
+                 + '<div class="ln"></div>' * h.get('lineas_notas', 6) + '</div>')
         return f'''<section class="sheet a-{h.get('acento', 'azul')}">{self.rh()}<div class="body">
 <p class="kick">{E(h.get('antetitulo', 'Primera revisión'))}</p><h1 class="h1">{E(h['titulo'])}</h1>
 <div class="steps">{cells}</div><div class="boxes">{boxes}</div>
-<div class="road"><span class="lbl" style="color:var(--recomendado)">Próximos pasos</span><ol>{rl}</ol></div>{notas}
+<div class="road"><span class="lbl" style="color:var(--recomendado)">{E(h.get('titulo_ruta', 'Próximos pasos'))}</span><ol{cols}>{rl}</ol></div>{notas}
 <div class="sign"><p>{E(h['firma'])}</p><img src="{self.logo_p}" alt="Postsicionate"></div>
 </div>{self.ft(n)}</section>'''
 
     def html(self):
         M = dict(MARCA_BASE)
         M.update(getattr(self.C, 'MARCA', {}))
-        css = css_marca(M, self.carpeta) + open(os.path.join(RAIZ, 'motor', 'estilos.css'), encoding='utf-8').read()
+        css = css_marca(M, self.carpeta) + open(os.path.join(RAIZ, 'motor', 'estilos.css'), encoding='utf-8').read() + M.get('css', '')
         hojas = [getattr(self, h['tipo'])(h, i + 1) for i, h in enumerate(self.C.HOJAS)]
         return (f'<!doctype html><html lang="es"><head><meta charset="utf-8"><title>{E(self.cli["nombre"])} · {E(self.cli["cabecera"])}</title>'
                 f'<style>{css}</style></head><body>{"".join(hojas)}</body></html>')
