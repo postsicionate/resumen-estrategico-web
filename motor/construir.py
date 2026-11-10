@@ -294,14 +294,19 @@ class Doc:
         cells = ''.join(f'<article class="a-{c}"><div class="pn">{i + 1:02d}</div><h3>{E(t)}</h3><p>{E(d)}</p></article>'
                         for i, (c, t, d) in enumerate(h['pasos']))
         boxes = ''.join(f'<div class="bxx a-{c}"><h3>{E(t)}</h3><p>{E(d)}</p></div>' for c, t, d in h['cajas'])
-        rl = ''.join(f'<li class="{"now" if i == h.get("paso_actual", 0) else ""}"><span>{i + 1:02d}</span>{E(x)}</li>' for i, x in enumerate(h['ruta']))
-        cols = '' if len(h['ruta']) == 5 else f' style="grid-template-columns:repeat({len(h["ruta"])},minmax(0,1fr))"'
+        # La ruta y las líneas para notas son opcionales: sin `ruta` o con lineas_notas=0 no salen.
+        ruta = h.get('ruta') or []
+        rl = ''.join(f'<li class="{"now" if i == h.get("paso_actual", 0) else ""}"><span>{i + 1:02d}</span>{E(x)}</li>' for i, x in enumerate(ruta))
+        cols = '' if len(ruta) == 5 else f' style="grid-template-columns:repeat({len(ruta)},minmax(0,1fr))"'
+        road = (f'<div class="road"><span class="lbl" style="color:var(--recomendado)">{E(h.get("titulo_ruta", "Próximos pasos"))}</span><ol{cols}>{rl}</ol></div>'
+                if ruta else '')
+        n_lineas = h.get('lineas_notas', 6)
         notas = (f'<div class="notes"><span class="lbl" style="color:var(--gris)">{E(h.get("titulo_notas", "Notas de la revisión"))}</span>'
-                 + '<div class="ln"></div>' * h.get('lineas_notas', 6) + '</div>')
+                 + '<div class="ln"></div>' * n_lineas + '</div>') if n_lineas else ''
         return f'''<section class="sheet a-{h.get('acento', 'azul')}">{self.rh()}<div class="body">
 <p class="kick">{E(h.get('antetitulo', 'Primera revisión'))}</p><h1 class="h1">{E(h['titulo'])}</h1>
 <div class="steps">{cells}</div><div class="boxes">{boxes}</div>
-<div class="road"><span class="lbl" style="color:var(--recomendado)">{E(h.get('titulo_ruta', 'Próximos pasos'))}</span><ol{cols}>{rl}</ol></div>{notas}
+{road}{notas}
 <div class="sign"><p>{E(h['firma'])}</p><img src="{self.logo_p}" alt="Postsicionate"></div>
 </div>{self.ft(n)}</section>'''
 

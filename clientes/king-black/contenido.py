@@ -14,7 +14,7 @@ CLIENTE = dict(
     pregunta='¿Cómo mantengo mi web al día yo mismo?',
     palabra_pintada='yo mismo',
     etiqueta_pregunta='La pregunta que responde esta hoja',
-    archivo='guia-panel-king-black-yobi', version='3',
+    archivo='guia-panel-king-black-yobi', version='3.1',
     asunto='Guía rápida del panel de kingblacktour.com',
 )
 
@@ -266,8 +266,6 @@ HOJAS = [
          ],
          cajas=[('oro', 'Lo que hace usted', 'Sus excursiones, sus paquetes, las fotos de la portada y el WhatsApp de reservas: precios, textos, fotos, orden, y qué se publica y qué no.'),
                 ('noche', 'Lo que hacemos nosotros', 'El diseño, la cabecera, el pie y las demás páginas. Escríbanos también si algo se ve extraño, sobre todo en el teléfono, o si no puede entrar.')],
-         titulo_ruta='Su acompañamiento',
-         ruta=['Esta guía', 'El vídeo paso a paso', 'La reunión con Chery en Punta Cana', 'Sus primeros cambios, con nosotros al lado'],
-         titulo_notas='Notas de la reunión', lineas_notas=5,
+         lineas_notas=0,
          firma='Su web, al día y con su estilo, desde su propio panel.'),
 ]
