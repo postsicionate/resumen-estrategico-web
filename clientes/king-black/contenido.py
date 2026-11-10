@@ -14,7 +14,7 @@ CLIENTE = dict(
     pregunta='¿Cómo mantengo mi web al día yo mismo?',
     palabra_pintada='yo mismo',
     etiqueta_pregunta='La pregunta que responde esta hoja',
-    archivo='guia-panel-king-black-yobi', version='3.1',
+    archivo='guia-panel-king-black-yobi', version='3.2',
     asunto='Guía rápida del panel de kingblacktour.com',
 )
 
@@ -116,10 +116,10 @@ HOJAS = [
          pie_movil='<b>También en el teléfono.</b> El mismo panel, para cambios rápidos como un precio. Para una excursión nueva, mejor el ordenador.'),
 
     dict(tipo='pasos', acento='oro', antetitulo='Para empezar', titulo='Entrar en su panel',
-         entrada='Su panel está en kingblacktour.com/wp-admin, en el ordenador o en el teléfono. La pantalla de entrada está en inglés; una vez dentro, todo le habla en español.',
+         entrada='Su panel está en kingblacktour.com/wp-admin, en el ordenador o en el teléfono. La pantalla de entrada lleva el logo de King Black y está en inglés; una vez dentro, todo le habla en español.',
          capturas=[
-             dict(src='img/entrar.png', ancho=33, pie='<b>La entrada,</b> en inglés.',
-                  marcas=[(88, 47.5, 1), (88, 65.5, 2), (91, 78, 3), (66, 96, 4)]),
+             dict(src='img/entrar.png', ancho=33, pie='<b>La entrada,</b> con su logo, en inglés.',
+                  marcas=[(88, 53, 1), (88, 68.7, 2), (91, 79.8, 3), (66, 96.2, 4)]),
              dict(src='img/panel-inicio.png', ancho=63, pie='<b>Su panel,</b> en español. Llega aquí al entrar.',
                   marcas=[(13.5, 40, 5), (58.5, 60, 6), (37.5, 88.5, 6)]),
          ],
