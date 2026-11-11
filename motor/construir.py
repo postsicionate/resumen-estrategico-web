@@ -28,7 +28,10 @@ MARCA_BASE = dict(
     necesario='#C8101A', recomendado='#0062C4', ok='#009E17', ok_d='#007A12', falta='#FF1F1C',
     titulos=dict(familia='Montserrat', archivos={500: 'fuentes/mont-500.ttf', 600: 'fuentes/mont-600.ttf',
                                                  700: 'fuentes/mont-700.ttf', 800: 'fuentes/mont-800.ttf'}),
-    cifras=None,  # ruta a una fuente de dígitos sin solapes (ver herramientas/fuentes.py); None = la de títulos
+    # Montserrat variable cruza los contornos de los dígitos: con relleno no se nota, pero los
+    # números grandes van calados y se veían líneas internas. Esta instancia de solo cifras lleva
+    # los solapes quitados y es la de por defecto; un cliente con otra tipografía pone la suya.
+    cifras='fuentes/mont-cifras-800.ttf',
     css='',       # CSS propio del cliente, después de estilos.css (por ejemplo, titulares en la fuente de su web)
 )
 
@@ -54,7 +57,9 @@ def css_marca(M, carpeta):
     ff += ''.join(f"@font-face{{font-family:'{f}';src:url({rel(carpeta, p)}) format('truetype');font-weight:{w};font-style:{s}}}\n"
                   for f, s, w, p in serif)
     if M.get('cifras'):
-        ff += f"@font-face{{font-family:'Cifras';src:url({M['cifras']}) format('truetype');font-weight:800;unicode-range:U+0030-0039}}\n"
+        # 'fuentes/…' es del repositorio; cualquier otra ruta es de la carpeta del cliente.
+        ruta_c = rel(carpeta, M['cifras']) if M['cifras'].startswith('fuentes/') else M['cifras']
+        ff += f"@font-face{{font-family:'Cifras';src:url({ruta_c}) format('truetype');font-weight:800;unicode-range:U+0030-0039}}\n"
     root = (f":root{{--tinta:{M['tinta']};--texto:{M['texto']};--gris:{M['gris']};--linea:{M['linea']};--papel:{M['papel']};"
             f"--necesario:{M['necesario']};--recomendado:{M['recomendado']};--ok:{M['ok']};--ok-d:{M['ok_d']};--falta:{M['falta']};"
             f"--pincel:{M['acentos'][M['pincel']][0]};"
@@ -275,10 +280,13 @@ class Doc:
         blocks = ''
         for b in h['bloques']:
             li = ''
+            # Los rótulos se pueden cambiar (`rotulos`) para que digan lo mismo que las
+            # listas de las hojas de página: en la edición de entrega, «Por confirmar».
+            rot = h.get('rotulos', ('Necesario', 'Recomendado'))
             if b.get('necesario'):
-                li += f'<span class="tag">Necesario</span><ul>{self.items(b["necesario"])}</ul>'
+                li += f'<span class="tag">{E(rot[0])}</span><ul>{self.items(b["necesario"])}</ul>'
             if b.get('recomendado'):
-                li += f'<span class="tag r">Recomendado</span><ul>{self.items(b["recomendado"])}</ul>'
+                li += f'<span class="tag r">{E(rot[1])}</span><ul>{self.items(b["recomendado"])}</ul>'
             blocks += f'<article class="nx"><h3>{E(b["titulo"])}<em>{E(b["etiqueta"])}</em></h3><p>{E(b["texto"])}</p>{li}</article>'
         extra = ''
         if h.get('lista'):
@@ -286,7 +294,7 @@ class Doc:
             extra = (f'<section class="shotlist"><div class="sl-h"><div><span class="lbl" style="color:var(--recomendado)">{E(l["antetitulo"])}</span>'
                      f'<h3>{E(l["titulo"])}</h3></div><p>{E(l["texto"])}</p></div><ul>{self.items(l["items"])}</ul></section>')
         return f'''<section class="sheet a-{h.get('acento', 'azul')}">{self.rh()}<div class="body">
-<p class="kick" style="color:var(--recomendado)">Próximas entregas</p><h1 class="h1">{E(h['titulo'])}</h1>
+<p class="kick" style="color:var(--recomendado)">{E(h.get('antetitulo', 'Próximas entregas'))}</p><h1 class="h1">{E(h['titulo'])}</h1>
 <p class="lead" style="margin-top:12px;max-width:640px">{E(h['entrada'])}</p><div class="next-grid">{blocks}</div>{extra}
 </div>{self.ft(n)}</section>'''
 
